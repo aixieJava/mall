@@ -1,0 +1,69 @@
+# Maven #
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# IDEA #
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse #
+.settings/
+.classpath
+.project
+
+# VS Code #
+.vscode/
+*.code-workspace
+
+# NetBeans #
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+# OS generated #
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Java #
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+replay_pid*.log
+
+# Environment / secrets #
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.jks
+*.keystore
+application-local.yml
+application-local.properties
+
+# Logs #
+logs/
+
+# Docker #
+docker-compose.override.yml
+
+# Python #
+__pycache__/
+*.pyc
+.venv/
+
+# Claude Code #
+.claude/plans/
+
+# Generated docx #
+*.docx
+!document/**/*.docx

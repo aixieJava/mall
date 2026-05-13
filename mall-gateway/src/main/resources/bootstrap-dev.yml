@@ -1,0 +1,11 @@
+spring:
+  cloud:
+    inetutils:
+      preferred-networks:
+        - 192.168.153
+    nacos:
+      discovery:
+        server-addr: http://192.168.153.129:8848
+      config:
+        server-addr: http://192.168.153.129:8848
+        file-extension: yaml
