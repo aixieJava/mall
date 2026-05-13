@@ -63,6 +63,7 @@ __pycache__/
 
 # Claude Code #
 .claude/plans/
+.claude/skills/
 
 # Generated docx #
 *.docx
