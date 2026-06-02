@@ -35,8 +35,8 @@
         <docker.host>http://192.168.3.101:2375</docker.host>
         <docker.maven.plugin.version>0.43.3</docker.maven.plugin.version>
         <java.version>17</java.version>
-        <spring-boot.version>3.2.2</spring-boot.version>
-        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <spring-boot.version>3.3.5</spring-boot.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <pagehelper-starter.version>2.1.0</pagehelper-starter.version>
         <pagehelper.version>6.1.0</pagehelper.version>
@@ -46,7 +46,7 @@
         <mybatis.version>3.5.14</mybatis.version>
         <mybatis-spring-boot-starter.version>3.0.3</mybatis-spring-boot-starter.version>
         <mysql-connector.version>8.0.29</mysql-connector.version>
-        <spring-data-commons.version>3.2.2</spring-data-commons.version>
+        <spring-data-commons.version>3.3.5</spring-data-commons.version>
         <aliyun-oss.version>2.5.0</aliyun-oss.version>
         <alipay-sdk.version>4.38.61.ALL</alipay-sdk.version>
         <logstash-logback.version>5.3</logstash-logback.version>
@@ -54,6 +54,7 @@
         <minio.version>8.4.5</minio.version>
         <knife4j.version>4.5.0</knife4j.version>
         <sa-token.version>1.37.0</sa-token.version>
+        <spring-ai.version>1.1.4</spring-ai.version>
         <mall-common.version>1.0-SNAPSHOT</mall-common.version>
         <mall-mbg.version>1.0-SNAPSHOT</mall-mbg.version>
     </properties>
@@ -241,6 +242,14 @@
                 <groupId>cn.dev33</groupId>
                 <artifactId>sa-token-jwt</artifactId>
                 <version>${sa-token.version}</version>
+            </dependency>
+            <!-- Spring AI BOM -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <!-- docker compose-->
 

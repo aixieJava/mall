@@ -1,8 +1,9 @@
 package com.macro.mall.portal.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.macro.mall.model.OmsOrder;
 import com.macro.mall.model.PmsProduct;
 import com.macro.mall.portal.domain.ChatResponse.OrderCard;
@@ -11,7 +12,6 @@ import com.macro.mall.portal.domain.OmsOrderDetail;
 import com.macro.mall.portal.domain.PmsPortalProductDetail;
 import com.macro.mall.portal.service.OmsPortalOrderService;
 import com.macro.mall.portal.service.PmsPortalProductService;
-import com.macro.mall.portal.service.UmsMemberService;
 import com.macro.mall.portal.util.StpMemberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,122 +19,162 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 执行 AI 返回的 function call，调用项目现有服务
+ * AI 工具执行器 —— 提供具体方法供 Spring AI FunctionCallback 调用
  */
 @Component
 public class FunctionToolExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FunctionToolExecutor.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Autowired
     private PmsPortalProductService productService;
     @Autowired
     private OmsPortalOrderService orderService;
-    @Autowired
-    private UmsMemberService memberService;
 
-    /**
-     * 执行工具调用，返回 JSON 字符串供 LLM 理解
-     */
-    public String execute(String functionName, String arguments) {
-        LOGGER.info("执行工具调用: function={}, args={}", functionName, arguments);
-        try {
-            Map<String, Object> args = MAPPER.readValue(arguments, new TypeReference<Map<String, Object>>() {});
-            return switch (functionName) {
-                case "searchProducts" -> searchProducts(args);
-                case "getProductDetail" -> getProductDetail(args);
-                case "listMyOrders" -> listMyOrders(args);
-                case "queryOrder" -> queryOrder(args);
-                default -> "{\"error\": \"未知功能: " + functionName + "\"}";
-            };
-        } catch (Exception e) {
-            LOGGER.error("工具调用失败: function={}", functionName, e);
-            return "{\"error\": \"执行失败: " + e.getMessage() + "\"}";
-        }
-    }
+    // ── 工具方法 ──
 
-    private String searchProducts(Map<String, Object> args) {
-        String keyword = (String) args.getOrDefault("keyword", "");
-        Integer sort = args.get("sort") != null ? ((Number) args.get("sort")).intValue() : 1;
+    public List<ProductToolResult> searchProducts(SearchProductsRequest request) {
+        String keyword = request.keyword != null ? request.keyword : "";
+        int sort = request.sort != null ? request.sort : 1;
+        LOGGER.info("searchProducts: keyword={}, sort={}", keyword, sort);
         List<PmsProduct> products = productService.search(keyword, null, null, 1, 5, sort);
         if (CollUtil.isEmpty(products)) {
-            return "{\"message\": \"未找到与'" + keyword + "'相关的商品\"}";
+            return List.of();
         }
-        List<Map<String, Object>> list = products.stream().map(p -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", p.getId());
-            m.put("name", p.getName());
-            m.put("subTitle", p.getSubTitle());
-            m.put("price", p.getPrice());
-            m.put("pic", p.getPic());
-            m.put("sale", p.getSale());
-            return m;
+        return products.stream().map(p -> {
+            ProductToolResult r = new ProductToolResult();
+            r.id = p.getId();
+            r.name = p.getName();
+            r.subTitle = p.getSubTitle();
+            r.price = p.getPrice();
+            r.pic = p.getPic();
+            r.sale = p.getSale();
+            return r;
         }).collect(Collectors.toList());
-        try { return MAPPER.writeValueAsString(list); } catch (Exception e) { return "[]"; }
     }
 
-    private String getProductDetail(Map<String, Object> args) {
-        Long productId = ((Number) args.get("productId")).longValue();
-        PmsPortalProductDetail detail = productService.detail(productId);
+    public ProductToolResult getProductDetail(GetProductDetailRequest request) {
+        LOGGER.info("getProductDetail: productId={}", request.productId);
+        PmsPortalProductDetail detail = productService.detail(request.productId);
         if (detail == null || detail.getProduct() == null) {
-            return "{\"error\": \"商品不存在\"}";
+            return null;
         }
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", detail.getProduct().getId());
-        m.put("name", detail.getProduct().getName());
-        m.put("subTitle", detail.getProduct().getSubTitle());
-        m.put("price", detail.getProduct().getPrice());
-        m.put("stock", detail.getProduct().getStock());
-        m.put("sale", detail.getProduct().getSale());
-        m.put("description", detail.getProduct().getDescription());
-        m.put("brandName", detail.getBrand() != null ? detail.getBrand().getName() : "");
-        try { return MAPPER.writeValueAsString(m); } catch (Exception e) { return "{}"; }
+        ProductToolResult r = new ProductToolResult();
+        r.id = detail.getProduct().getId();
+        r.name = detail.getProduct().getName();
+        r.subTitle = detail.getProduct().getSubTitle();
+        r.price = detail.getProduct().getPrice();
+        r.pic = detail.getProduct().getPic();
+        r.stock = detail.getProduct().getStock();
+        r.sale = detail.getProduct().getSale();
+        r.description = detail.getProduct().getDescription();
+        r.brandName = detail.getBrand() != null ? detail.getBrand().getName() : "";
+        return r;
     }
 
-    private String listMyOrders(Map<String, Object> args) {
-        if (!isLoggedIn()) return "{\"error\": \"请先登录后再查询订单\"}";
-        Integer status = args.get("status") != null ? ((Number) args.get("status")).intValue() : -1;
+    public List<OrderToolResult> listMyOrders(ListMyOrdersRequest request) {
+        LOGGER.info("listMyOrders: status={}", request.status);
+        if (!isLoggedIn()) {
+            throw new RuntimeException("请先登录后再查询订单");
+        }
+        int status = request.status != null ? request.status : -1;
         var page = orderService.list(status, 1, 5);
         if (CollUtil.isEmpty(page.getList())) {
-            return "{\"message\": \"暂无订单记录\"}";
+            return List.of();
         }
-        List<Map<String, Object>> list = page.getList().stream().map(o -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", o.getId());
-            m.put("orderSn", o.getOrderSn());
-            m.put("status", o.getStatus());
-            m.put("statusText", getStatusText(o.getStatus()));
-            m.put("payAmount", o.getPayAmount());
-            m.put("createTime", o.getCreateTime() != null ? o.getCreateTime().toString() : "");
-            return m;
+        return page.getList().stream().map(o -> {
+            OrderToolResult r = new OrderToolResult();
+            r.id = o.getId();
+            r.orderSn = o.getOrderSn();
+            r.status = o.getStatus();
+            r.statusText = getStatusText(o.getStatus());
+            r.payAmount = o.getPayAmount();
+            r.createTime = o.getCreateTime() != null ? o.getCreateTime().toString() : "";
+            return r;
         }).collect(Collectors.toList());
-        try { return MAPPER.writeValueAsString(list); } catch (Exception e) { return "[]"; }
     }
 
-    private String queryOrder(Map<String, Object> args) {
-        if (!isLoggedIn()) return "{\"error\": \"请先登录后再查询订单\"}";
-        Long orderId = ((Number) args.get("orderId")).longValue();
-        OmsOrderDetail detail = orderService.detail(orderId);
-        if (detail == null) {
-            return "{\"error\": \"订单不存在\"}";
+    public OrderToolResult queryOrder(QueryOrderRequest request) {
+        LOGGER.info("queryOrder: orderId={}", request.orderId);
+        if (!isLoggedIn()) {
+            throw new RuntimeException("请先登录后再查询订单");
         }
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", detail.getId());
-        m.put("orderSn", detail.getOrderSn());
-        m.put("status", detail.getStatus());
-        m.put("statusText", getStatusText(detail.getStatus()));
-        m.put("totalAmount", detail.getTotalAmount());
-        m.put("payAmount", detail.getPayAmount());
-        m.put("createTime", detail.getCreateTime() != null ? detail.getCreateTime().toString() : "");
-        m.put("paymentTime", detail.getPaymentTime() != null ? detail.getPaymentTime().toString() : "");
-        m.put("receiverName", detail.getReceiverName());
-        m.put("receiverPhone", detail.getReceiverPhone());
-        try { return MAPPER.writeValueAsString(m); } catch (Exception e) { return "{}"; }
+        OmsOrderDetail detail = orderService.detail(request.orderId);
+        if (detail == null) {
+            return null;
+        }
+        OrderToolResult r = new OrderToolResult();
+        r.id = detail.getId();
+        r.orderSn = detail.getOrderSn();
+        r.status = detail.getStatus();
+        r.statusText = getStatusText(detail.getStatus());
+        r.totalAmount = detail.getTotalAmount();
+        r.payAmount = detail.getPayAmount();
+        r.createTime = detail.getCreateTime() != null ? detail.getCreateTime().toString() : "";
+        r.paymentTime = detail.getPaymentTime() != null ? detail.getPaymentTime().toString() : "";
+        r.receiverName = detail.getReceiverName();
+        r.receiverPhone = detail.getReceiverPhone();
+        return r;
     }
+
+    // ── 卡片提取（供前端展示） ──
+
+    public List<ProductCard> extractProductCards(String functionName, Object result) {
+        if (!"searchProducts".equals(functionName) && !"getProductDetail".equals(functionName)) {
+            return null;
+        }
+        if (result == null) return null;
+        try {
+            if (result instanceof List<?> list && !list.isEmpty()) {
+                Object first = list.get(0);
+                if (first instanceof ProductToolResult) {
+                    List<ProductCard> cards = new ArrayList<>();
+                    for (Object item : list) {
+                        ProductToolResult p = (ProductToolResult) item;
+                        ProductCard card = new ProductCard();
+                        card.setId(p.id);
+                        card.setName(p.name);
+                        card.setPic(p.pic);
+                        card.setPrice(p.price);
+                        card.setSubTitle(p.subTitle);
+                        cards.add(card);
+                    }
+                    return cards.size() > 3 ? cards.subList(0, 3) : cards;
+                }
+            }
+            if (result instanceof ProductToolResult p) {
+                ProductCard card = new ProductCard();
+                card.setId(p.id);
+                card.setName(p.name);
+                card.setPic(p.pic);
+                card.setPrice(p.price);
+                card.setSubTitle(p.subTitle);
+                return List.of(card);
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    public OrderCard extractOrderCard(String functionName, Object result) {
+        if (!"queryOrder".equals(functionName)) return null;
+        if (result instanceof OrderToolResult o) {
+            OrderCard card = new OrderCard();
+            card.setId(o.id);
+            card.setOrderSn(o.orderSn);
+            card.setStatusText(o.statusText);
+            card.setPayAmount(o.payAmount);
+            card.setCreateTime(o.createTime);
+            return card;
+        }
+        return null;
+    }
+
+    // ── 辅助 ──
 
     private boolean isLoggedIn() {
         try {
@@ -155,35 +195,58 @@ public class FunctionToolExecutor {
         };
     }
 
-    /**
-     * 从工具返回值中提取商品卡片（用于前端展示）
-     */
-    public List<ProductCard> extractProductCards(String functionName, String toolResult) {
-        if (!"searchProducts".equals(functionName) && !"getProductDetail".equals(functionName)) {
-            return null;
-        }
-        try {
-            if ("searchProducts".equals(functionName)) {
-                List<ProductCard> cards = MAPPER.readValue(toolResult, new TypeReference<List<ProductCard>>() {});
-                return CollUtil.isEmpty(cards) ? null : cards.subList(0, Math.min(cards.size(), 3));
-            }
-            if ("getProductDetail".equals(functionName)) {
-                ProductCard card = MAPPER.readValue(toolResult, ProductCard.class);
-                return card != null ? List.of(card) : null;
-            }
-        } catch (Exception ignored) {}
-        return null;
+    // ── 请求 Record ──
+
+    public static class SearchProductsRequest {
+        @JsonPropertyDescription("搜索关键词")
+        public String keyword;
+        @JsonPropertyDescription("排序: 1新品 2销量 3价格升 4价格降")
+        public Integer sort;
     }
 
-    /**
-     * 从工具返回值中提取订单卡片
-     */
-    public OrderCard extractOrderCard(String functionName, String toolResult) {
-        if (!"queryOrder".equals(functionName)) return null;
-        try {
-            return MAPPER.readValue(toolResult, OrderCard.class);
-        } catch (Exception e) {
-            return null;
-        }
+    public static class GetProductDetailRequest {
+        @JsonPropertyDescription("商品ID")
+        public Long productId;
+    }
+
+    public static class ListMyOrdersRequest {
+        @JsonPropertyDescription("订单状态: 0待付款 1待发货 2已发货 3已完成 4已关闭，不传查全部")
+        public Integer status;
+    }
+
+    public static class QueryOrderRequest {
+        @JsonPropertyDescription("订单ID")
+        public Long orderId;
+    }
+
+    // ── 响应 POJO（供 LLM 消费） ──
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class ProductToolResult {
+        public Long id;
+        public String name;
+        public String subTitle;
+        public BigDecimal price;
+        public String pic;
+        public Integer sale;
+        public Integer stock;
+        public String description;
+        public String brandName;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class OrderToolResult {
+        public Long id;
+        public String orderSn;
+        public Integer status;
+        public String statusText;
+        public BigDecimal payAmount;
+        public BigDecimal totalAmount;
+        public String createTime;
+        public String paymentTime;
+        @JsonProperty("receiver_name")
+        public String receiverName;
+        @JsonProperty("receiver_phone")
+        public String receiverPhone;
     }
 }

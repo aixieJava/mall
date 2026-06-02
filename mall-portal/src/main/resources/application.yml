@@ -33,6 +33,16 @@ spring:
     virtual-host: /mall
     username: mall
     password: mall
+  # AI 客服配置（Spring AI）
+  ai:
+    openai:
+      api-key: ${AI_API_KEY:sk-358d61b09b494465b7daec5d99c047c0}
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          max-tokens: 2000
+          temperature: 0.7
 mybatis:
   mapper-locations:
     - classpath:dao/*.xml
@@ -106,12 +116,4 @@ sa-token:
   # 是否打印banner
   is-print: false
 
-# AI 客服配置
-ai:
-  chat:
-    provider: deepseek
-    api-key: ${AI_API_KEY:sk-358d61b09b494465b7daec5d99c047c0}
-    api-url: https://api.deepseek.com/v1/chat/completions
-    model: deepseek-chat
-    max-tokens: 2000
-    temperature: 0.7
+
