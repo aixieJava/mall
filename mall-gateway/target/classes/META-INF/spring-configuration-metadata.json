@@ -1,0 +1,17 @@
+{
+  "groups": [
+    {
+      "name": "secure.ignore",
+      "type": "com.macro.mall.config.IgnoreUrlsConfig",
+      "sourceType": "com.macro.mall.config.IgnoreUrlsConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "secure.ignore.urls",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.macro.mall.config.IgnoreUrlsConfig"
+    }
+  ],
+  "hints": []
+}
