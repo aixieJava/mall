@@ -2,6 +2,7 @@ package com.macro.mall.portal.domain;
 
 import com.macro.mall.model.UmsIntegrationConsumeSetting;
 import com.macro.mall.model.UmsMemberReceiveAddress;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -10,18 +11,19 @@ import java.util.List;
  * 确认单信息封装
  * Created by macro on 2018/8/30.
  */
+@Schema(description = "确认单信息")
 public class ConfirmOrderResult {
-    //包含优惠信息的购物车信息
+    @Schema(description = "包含优惠信息的购物车信息")
     private List<CartPromotionItem> cartPromotionItemList;
-    //用户收货地址列表
+    @Schema(description = "用户收货地址列表")
     private List<UmsMemberReceiveAddress> memberReceiveAddressList;
-    //用户可用优惠券列表
+    @Schema(description = "用户可用优惠券列表")
     private List<SmsCouponHistoryDetail> couponHistoryDetailList;
-    //积分使用规则
+    @Schema(description = "积分使用规则")
     private UmsIntegrationConsumeSetting integrationConsumeSetting;
-    //会员持有的积分
+    @Schema(description = "会员持有的积分")
     private Integer memberIntegration;
-    //计算的金额
+    @Schema(description = "计算的金额")
     private CalcAmount calcAmount;
 
     public List<CartPromotionItem> getCartPromotionItemList() {
@@ -72,14 +74,15 @@ public class ConfirmOrderResult {
         this.calcAmount = calcAmount;
     }
 
+    @Schema(description = "金额计算明细")
     public static class CalcAmount{
-        //订单商品总金额
+        @Schema(description = "订单商品总金额")
         private BigDecimal totalAmount;
-        //运费
+        @Schema(description = "运费")
         private BigDecimal freightAmount;
-        //活动优惠
+        @Schema(description = "活动优惠金额")
         private BigDecimal promotionAmount;
-        //应付金额
+        @Schema(description = "应付金额")
         private BigDecimal payAmount;
 
         public BigDecimal getTotalAmount() {

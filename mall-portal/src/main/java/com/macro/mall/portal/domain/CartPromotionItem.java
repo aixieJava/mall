@@ -1,6 +1,7 @@
 package com.macro.mall.portal.domain;
 
 import com.macro.mall.model.OmsCartItem;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
@@ -8,16 +9,17 @@ import java.math.BigDecimal;
  * Created by macro on 2018/8/27.
  * 购物车中促销信息的封装
  */
+@Schema(description = "购物车促销商品信息")
 public class CartPromotionItem extends OmsCartItem{
-    //促销活动信息
+    @Schema(description = "促销活动信息")
     private String promotionMessage;
-    //促销活动减去的金额，针对每个商品
+    @Schema(description = "促销活动减去的金额（针对每个商品）")
     private BigDecimal reduceAmount;
-    //商品的真实库存（剩余库存-锁定库存）
+    @Schema(description = "商品的真实库存（剩余库存-锁定库存）")
     private Integer realStock;
-    //购买商品赠送积分
+    @Schema(description = "购买商品赠送积分")
     private Integer integration;
-    //购买商品赠送成长值
+    @Schema(description = "购买商品赠送成长值")
     private Integer growth;
     public String getPromotionMessage() {
         return promotionMessage;

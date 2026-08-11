@@ -1,14 +1,19 @@
 package com.macro.mall.common.api;
 
 import cn.hutool.json.JSONUtil;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * 通用返回对象
  * Created by macro on 2019/4/19.
  */
+@Schema(description = "通用返回结果")
 public class CommonResult<T> {
+    @Schema(description = "状态码", example = "200")
     private long code;
+    @Schema(description = "提示信息", example = "操作成功")
     private String message;
+    @Schema(description = "返回数据")
     private T data;
 
     protected CommonResult() {

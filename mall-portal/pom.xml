@@ -74,6 +74,21 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
+        <!-- 本地 ONNX embedding（all-MiniLM-L6-v2，零额外 API key），解决 DeepSeek 无 embedding 接口的问题 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-transformers</artifactId>
+        </dependency>
+        <!-- 模块化 RAG：RetrievalAugmentationAdvisor / RewriteQueryTransformer / VectorStoreDocumentRetriever -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-rag</artifactId>
+        </dependency>
+        <!-- 向量类 advisor 支撑（SimpleVectorStore 等） -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-advisors-vector-store</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

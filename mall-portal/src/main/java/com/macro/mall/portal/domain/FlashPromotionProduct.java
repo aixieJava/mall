@@ -1,6 +1,7 @@
 package com.macro.mall.portal.domain;
 
 import com.macro.mall.model.PmsProduct;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,8 +13,12 @@ import java.math.BigDecimal;
  */
 @Getter
 @Setter
+@Schema(description = "秒杀商品信息")
 public class FlashPromotionProduct extends PmsProduct{
+    @Schema(description = "秒杀价格")
     private BigDecimal flashPromotionPrice;
+    @Schema(description = "秒杀数量")
     private Integer flashPromotionCount;
+    @Schema(description = "秒杀限购数量")
     private Integer flashPromotionLimit;
 }
